@@ -6,7 +6,7 @@
 static inline uint64_t rdtsc()
 {
 	uint64_t lo, hi;
-	//__asm__ __volatile__ ("rdtsc" : "=a" (lo), "=d" (hi) );
+//	__asm__ __volatile__ ("rdtsc" : "=a" (lo), "=d" (hi) );
 	__asm__ __volatile__("rdtscp; " "shl $32,%%rdx; "  "or %%rdx,%%rax" : "=a"(lo)  : : "%rcx", "%rdx"); 
 	//return( lo | (hi << 32) );
 	return lo ;
@@ -16,7 +16,7 @@ static inline void busy(uint64_t count)
 {
 	uint64_t aux, before;
 	before = rdtsc();
-	while(rdtsc() - before < count)
+	while(rdtsc() - before < count) //branch misprediction causes poor precision for low values
 		;
 }
 
@@ -54,7 +54,7 @@ void calibrate_busy(uint32_t *single, uint32_t *loop)
 	}
 	loop_f = (float)acc/reps - single_f;
 	*loop = (int)(loop_f + 0.5);
-	printf("\nsingle_f: %f, loop_f: %f", single_f, loop_f);
+	printf("single_f: %f, loop_f: %f", single_f, loop_f);
 }
 
 int main (int ac, char **av){
@@ -68,10 +68,11 @@ int main (int ac, char **av){
 	
 	if(reps < cyc_loop)
 		reps = cyc_loop+1;
-	else if(reps < 2*cyc_loop)
-		reps = 2*cyc_loop+1;
+	else if(reps < 2*cyc_loop+1)
+		reps = cyc_loop+cyc_rdtsc+3;
+	reps = reps-cyc_loop-1;
 	start =  rdtsc();
-	busy(reps-cyc_loop-1);
+	busy(reps);
 	end = rdtsc();
 	printf("\nwaited for %d cycles", end-start-cyc_rdtsc);
 	printf("\n");
