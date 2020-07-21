@@ -65,6 +65,11 @@ int main (int ac, char **av){
 	calibrate_busy(&cyc_rdtsc, &cyc_loop);
 	printf("\nsingle: %d, loop: %d", cyc_rdtsc, cyc_loop);
 
+	
+	if(reps < cyc_loop)
+		reps = cyc_loop+1;
+	else if(reps < 2*cyc_loop)
+		reps = 2*cyc_loop+1;
 	start =  rdtsc();
 	busy(reps-cyc_loop-1);
 	end = rdtsc();
